@@ -27,24 +27,28 @@ public class Main {
             @Override
             public void subscribe(ObservableEmitter<String> e) throws Exception {
                 BufferedReader bfr = new BufferedReader(new InputStreamReader(System.in));
-                String s = "";
                 while (true) {
-                    s = bfr.readLine();
+                    String s = bfr.readLine();
+                    if (s.startsWith("$$$END"))
+                        break;
                     e.onNext(s);
                 }
+                e.onComplete();
             }
         });
 
-        Observable<String> text = input.takeWhile((String s) -> s.contains("END")).collectInto();
-        //Observable<String> text = Observable.just("hi $name");
-
-        //text.subscribe(System.out::println, (Throwable e) -> {}, () -> { System.out.println("finish"); } );
+        Observable<String> text = input.scan((String res, String s) -> { return res + "\n" + s; })
+                .takeLast(1).cache();
 
         text.map(VariableFinder::findVariables)
                 .flatMap((Observable<Variable> o) -> { return o; })
-                .map(VariableReader::print)
-                .zipWith(input.subscribeOn(Schedulers.single()).take(1), VariableReader::read)
-                .zipWith(text.repeat(), VariableReplacer::replace)
+                .map((Variable var) -> {
+                    VariableReader.print(var);
+                    return VariableReader.set(var, VariableReader.read());
+                })
+                //TODO make an operator BufferAll or smth like that
+                .buffer(99999)
+                .zipWith(text.repeat(), VariableReplacer::replaceAll)
                 .subscribe(System.out::println);
     }
 }
