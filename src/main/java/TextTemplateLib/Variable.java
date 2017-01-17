@@ -20,6 +20,6 @@ public class Variable {
         this.mValue = value;
     }
 
-    String mValue;
+    String mValue = "";
     final String mName;
 }

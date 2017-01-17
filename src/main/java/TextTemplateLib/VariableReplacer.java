@@ -7,6 +7,6 @@ import java.util.regex.Pattern;
  */
 public class VariableReplacer {
     public static String replace(Variable var, String text) {
-        return text.replaceAll("$" + var.mName, var.getValue());
+        return text.replaceAll("\\$" + var.mName, var.getValue());
     }
 }

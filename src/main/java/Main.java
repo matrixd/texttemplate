@@ -36,14 +36,14 @@ public class Main {
         });
 
         //Observable<String> text = input.takeWhile((String s) -> s.contains("END")).cache();
-        Observable<String> text = input;
+        Observable<String> text = Observable.just("hi $name");
 
         //text.subscribe(System.out::println, (Throwable e) -> {}, () -> { System.out.println("finish"); } );
 
         text.map(VariableFinder::findVariables)
                 .flatMap((Observable<Variable> o) -> { return o; })
                 .map(VariableReader::print)
-                //.zipWith(input, VariableReader::read)
+                .zipWith(input.take(1), VariableReader::read)
                 .zipWith(text.repeat(), VariableReplacer::replace)
                 .subscribe(System.out::println);
     }
