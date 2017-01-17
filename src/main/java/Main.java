@@ -14,6 +14,8 @@ import io.reactivex.subjects.Subject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by ulanov on 17.01.17.
@@ -26,24 +28,22 @@ public class Main {
             public void subscribe(ObservableEmitter<String> e) throws Exception {
                 BufferedReader bfr = new BufferedReader(new InputStreamReader(System.in));
                 String s = "";
-                while (!s.startsWith("superend")) {
+                while (true) {
                     s = bfr.readLine();
                     e.onNext(s);
                 }
-
-                e.onComplete();
             }
         });
 
-        //Observable<String> text = input.takeWhile((String s) -> s.contains("END")).cache();
-        Observable<String> text = Observable.just("hi $name");
+        Observable<String> text = input.takeWhile((String s) -> s.contains("END")).collectInto();
+        //Observable<String> text = Observable.just("hi $name");
 
         //text.subscribe(System.out::println, (Throwable e) -> {}, () -> { System.out.println("finish"); } );
 
         text.map(VariableFinder::findVariables)
                 .flatMap((Observable<Variable> o) -> { return o; })
                 .map(VariableReader::print)
-                .zipWith(input.take(1), VariableReader::read)
+                .zipWith(input.subscribeOn(Schedulers.single()).take(1), VariableReader::read)
                 .zipWith(text.repeat(), VariableReplacer::replace)
                 .subscribe(System.out::println);
     }
